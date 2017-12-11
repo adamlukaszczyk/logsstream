@@ -1,0 +1,51 @@
+version: "2.0"
+
+services:
+    logs_elasticsearch:
+        image: docker.elastic.co/elasticsearch/elasticsearch:5.6.4
+        mem_limit: 1000m     
+        restart: 'always'
+        ports:
+            - '9210:9200'
+        environment:
+            - "xpack.security.enabled=false"
+            - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+
+    logs_logstash:
+        image: docker.elastic.co/logstash/logstash:5.6.4
+        mem_limit: 1000m   
+        restart: 'always'
+        environment:
+            - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+        ports:
+            - '5010:5000/tcp'
+        links:
+            - logs_elasticsearch:elasticsearch
+        volumes:
+            - './elk/logstash.conf:/config/logstash.conf:ro'
+        command: -f /config/logstash.conf
+
+    logs_kibana:
+        build:
+            context: ./elk
+            dockerfile: Dockerfile-kibana
+        mem_limit: 1000m     
+        restart: 'always'
+        links:
+            - logs_elasticsearch:elasticsearch
+        ports:
+            - '5611:5601'
+        environment:
+            - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+
+    logs_metrics:
+        image: docker.elastic.co/beats/metricbeat:6.0.1
+        restart: 'always'
+        volumes:
+            - "/proc:/hostfs/proc:ro"
+            - "/sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro"
+            - "/:/hostfs:ro"
+            - "./elk/metricbeat.yml:/usr/share/metricbeat/metricbeat.yml:ro"
+        network_mode: host
+        command:
+            - "-system.hostfs=/hostfs"

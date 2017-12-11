@@ -1,0 +1,47 @@
+version: "2.0"
+
+services:
+    apache:
+        image: httpd:alpine
+        restart: 'always'
+        ports:
+            - '7701:80'
+        logging:
+            driver: syslog
+            options:
+                syslog-address: "tcp://0.0.0.0:5010"
+                tag: /dev/apache
+
+    nginx:
+        image: nginx:alpine
+        restart: 'always'
+        ports:
+            - '7702:80'
+        logging:
+            driver: syslog
+            options:
+                syslog-address: "tcp://0.0.0.0:5010"
+                tag: /dev/nginx
+    
+    pinger:
+        image: alpine
+        restart: 'always'
+        command: ["ping", "google.com"]
+        logging:
+            driver: syslog
+            options:
+                syslog-address: "tcp://0.0.0.0:5010"
+                tag: /dev/ping
+
+    emitter:
+        image: nginx:alpine
+        restart: 'always'
+        ports:
+            - '7777:80'
+        volumes:
+          - './emitter:/usr/share/nginx/html'
+        logging:
+            driver: syslog
+            options:
+                syslog-address: "tcp://0.0.0.0:5010"
+                tag: /dev/emitter
