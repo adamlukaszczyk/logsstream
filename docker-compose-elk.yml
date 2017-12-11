@@ -47,5 +47,7 @@ services:
             - "/:/hostfs:ro"
             - "./elk/metricbeat.yml:/usr/share/metricbeat/metricbeat.yml:ro"
         network_mode: host
+        depends_on:
+            - logs_elasticsearch
         command:
             - "-system.hostfs=/hostfs"
